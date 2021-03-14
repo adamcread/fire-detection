@@ -49,7 +49,7 @@ batch_size = args.batch_size
 if args.system == 'fire':
     train = 'data/fire_train_temp.json' # json containing videos for training
     val = 'data/fire_val.json' # json containing videos for evaluation
-    root = './fire' # path to videos
+    root = './fire-dataset' # path to videos
 
     from minikinetics_dataset import MK
     # load training videos into object
