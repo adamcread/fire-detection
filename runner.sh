@@ -9,5 +9,5 @@
 
 source /etc/profile 
 module load cuda/10.1
-source env2/bin/activate
+source env/bin/activate
 python train_model.py
