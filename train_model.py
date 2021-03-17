@@ -27,8 +27,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
-#import models
-import kinetics_2p1d_model
+#import model
+import flow_model
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -38,7 +38,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #
 ##################
 # model = flow_2p1d_resnets.resnet50(pretrained=False, mode=args.mode, n_iter=args.niter, learnable=eval(args.learnable), num_classes=400)
-model = kinetics_2p1d_model.resnet_3d_v1(
+model = flow_model.resnet_3d_v1(
     resnet_depth=50, # taken from resnet_3d_v1 definition
     num_classes=2
 )
@@ -47,13 +47,13 @@ model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
 
 if args.system == 'fire':
-    train = './data/fire_train.json' # json containing videos for training
-    val = './data/fire_val.json' # json containing videos for evaluation
-    root = './fire-dataset' # path to videos
+    train = './fire_train.json' # json containing videos for training
+    val = './fire_val.json' # json containing videos for evaluation
+    root = './dataset' # path to videos
 
-    from minikinetics_dataset import MK
+    from dataset_loader import DS
     # load training videos into object
-    dataset_tr = MK(
+    dataset_tr = DS(
                 split_file=train, # videos selected for loading
                 root=root, # root dir to find videos
                 length=args.length, # number of videos?
@@ -62,7 +62,7 @@ if args.system == 'fire':
     ) 
     dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
     
-    dataset_val = MK(
+    dataset_val = DS(
             split_file=val, 
             root=root, 
             length=args.length, 

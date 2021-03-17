@@ -10,7 +10,7 @@ import lintel
 import json
 
 
-class MK(data_utl.Dataset):
+class DS(data_utl.Dataset):
     def __init__(self, split_file, root, mode='rgb', length=64, random=True, model='2d', size=112):
         with open(split_file, 'r') as f: 
             self.data = json.load(f) # get video paths from json
@@ -112,13 +112,4 @@ class MK(data_utl.Dataset):
         
     def __len__(self):
         return len(self.data.keys())
-
-
-
-if __name__ == '__main__':
-    train = '/ssd/ajpiergi/minikinetics_train.json'
-    val = '/ssd/ajpiergi/minikinetics_val.json'
-    root = '/ssd/ajpiergi/minikinetics/'
-    dataset_tr = MK(train, root, length=16, model='2d', mode='flow')
-    print(dataset_tr[random.randint(0,1000)])
 
