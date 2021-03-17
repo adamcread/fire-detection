@@ -46,34 +46,34 @@ model = flow_model.resnet_3d_v1(
 model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
 
-if args.system == 'fire':
-    train = './fire_train.json' # json containing videos for training
-    val = './fire_val.json' # json containing videos for evaluation
-    root = './dataset' # path to videos
 
-    from dataset_loader import DS
-    # load training videos into object
-    dataset_tr = DS(
-                split_file=train, # videos selected for loading
-                root=root, # root dir to find videos
-                length=args.length, # number of videos?
-                model=args.model, # 2d/3d
-                mode=args.mode # rgb or flow?
-    ) 
-    dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+train = './fire_train.json' # json containing videos for training
+val = './fire_val.json' # json containing videos for evaluation
+root = './dataset' # path to videos
+
+from dataset_loader import DS
+# load training videos into object
+dataset_tr = DS(
+        split_file=train, # videos selected for loading
+        root=root, # root dir to find videos
+        length=args.length, # number of videos?
+        model=args.model, # 2d/3d
+        mode=args.mode # rgb or flow?
+) 
+dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
     
-    dataset_val = DS(
-            split_file=val, 
-            root=root, 
-            length=args.length, 
-            model=args.model, 
-            mode=args.mode
-    ) # load evaluation videos into object
-    vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+dataset_val = DS(
+        split_file=val, 
+        root=root, 
+        length=args.length, 
+        model=args.model, 
+        mode=args.mode
+) # load evaluation videos into object
+vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
 
-    dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
-    print("data loaded")
+dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
+print("DATA LOADED")
     
 params = [p for p in model.parameters()]
 # stochastic gradient descent
