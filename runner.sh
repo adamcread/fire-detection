@@ -1,11 +1,13 @@
-# !/bin/bash
+#!/bin/bash
 
-# SBATCH -N 1 # nodes
-# SBATCH -c 4 # cores
-# SBATCH -p "ug-gpu-small" # partition name
-# SBATCH --qos="long-high-prio"
-# SBATCH -t 02:00:00
+#SBATCH -N 1 # nodes
+#SBATCH -c 1 # cores
+#SBATCH --gres=gpu
+#SBATCH -p "ug-gpu-small" # partition name
+#SBATCH --qos="long-low-prio"
+#SBATCH -t 12:00:00
 
-source env/bin/activate
-
-python package_tester.py
+source /etc/profile 
+module load cuda/10.1
+source env2/bin/activate
+python train_model.py
