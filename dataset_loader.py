@@ -11,16 +11,16 @@ import json
 
 
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, mode='rgb', length=64, random=True, model='2d', size=112):
+    def __init__(self, split_file, root, mode='rgb', length=64, random=True, model='2d', size=24):
         with open(split_file, 'r') as f: 
             self.data = json.load(f) # get video paths from json
+
         self.vids = [k for k in self.data.keys()] # store video paths from json in list
+
 
         if mode == 'flow': # if flow do what?
             new_data = {}
-
             self.vids = ['flow'+v[3:] for v in self.vids] # remap videos to be flow...{vid_path}
-
             for v in self.data.keys():
                 new_data['flow'+v[3:]] = self.data[v] # add labels to flow
 
@@ -37,7 +37,7 @@ class DS(data_utl.Dataset):
 
     def __getitem__(self, index):
         vid = self.vids[index] # get video at correct index
-        cls = self.data[vid] # get label from correct vid
+        classification = self.data[vid] # get label from correct vid
 
         if not os.path.exists(os.path.join(self.root, vid)): # if vid cannot be found as it's flow?
             if self.mode == 'flow' and self.model == '2d':
@@ -47,46 +47,46 @@ class DS(data_utl.Dataset):
         
         # open path now video must exist
         with open(os.path.join(self.root, vid), 'rb') as f:
-            enc_vid = f.read() # read file binary? 
+            enc_vid = f.read() # read file binary
             # binary data = raw data => read file raw data
         
         # loading vid into lintel
         # obtaining dataframe width and height of video
         df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random, num_frames=self.length*2)
-        # print("width", w, "height", h) # raw video dimensions (unedited)
-     
+
         # interpret buffer as 1 dimensional array
         df = np.frombuffer(df, dtype=np.uint8) # unsigned 8 bit integer
 
-        if w < 128 or h < 128 or h > 512 or w > 512: # if video too big or too small
-             # crop df to 128x128
-            df = np.zeros(
-                            (self.length*2, # number of frames?
-                            128, # height
-                            128, # width
-                            3), # colour channels?
-                            dtype=np.uint8
-            )
+        # if w < 128 or h < 128 or h > 512 or w > 512: # if video too big or too small
+        #     # crop df to 128x128
+        #     df = np.zeros(
+        #                 (self.length*2, # number of frames?
+        #                 128, # height
+        #                 128, # width
+        #                 3), # colour channels?
+        #                 dtype=np.uint8
+        #     )
 
-            w = h = 128
-            cls = 0
+        #     w = h = 128
+        #     classification = 0 # set classification to 0 if video is cropped
 
         # center crop 
-        # applying random croppings to help improve performance slightly
-        if not self.random:
-            i = int(round((h-self.size)/2.))
-            j = int(round((w-self.size)/2.))
-            df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:-i, j:-j, :]
-        else:
-            th = self.size
-            tw = self.size
-            #print(h, th, h-th)
-            i = random.randint(0, h - th) if h!=th else 0
-            j = random.randint(0, w - tw) if w!=tw else 0
-            df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:i+th, j:j+tw, :]
+        # applying random croppings -> different each time video is loaded
+        # if not self.random:
+        #     i = int(round((h-self.size)/2.))
+        #     j = int(round((w-self.size)/2.))
+        #     df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:-i, j:-j, :]
 
-            if random.random() < 0.5:
-                df = np.flip(df, axis=2).copy()
+        # else:
+        #     th = self.size
+        #     tw = self.size
+        #     #print(h, th, h-th)
+        #     i = random.randint(0, h - th) if h!=th else 0
+        #     j = random.randint(0, w - tw) if w!=tw else 0
+        #     df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:i+th, j:j+tw, :]
+
+        #     if random.random() < 0.5:
+        #         df = np.flip(df, axis=2).copy()
 
         if self.mode == 'flow':
             #print(df[:,:,:,1:].mean())
@@ -105,10 +105,10 @@ class DS(data_utl.Dataset):
 
         if self.model == '2d':
             # 2d -> return TxCxHxW
-            return df.transpose([0,3,1,2]), cls
+            return df.transpose([0,3,1,2]), classification
         
         # 3d -> return CxTxHxW
-        return df.transpose([3,0,1,2]), cls
+        return df.transpose([3,0,1,2]), classification
         
     def __len__(self):
         return len(self.data.keys())

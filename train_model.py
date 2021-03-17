@@ -17,7 +17,7 @@ parser.add_argument('-length', type=int, default=16)
 parser.add_argument('-learnable', type=str, default='[0,0,0,0,0]')
 parser.add_argument('-lr', type=float, default=0.01)
 parser.add_argument('-niter', type=int)
-parser.add_argument('-clip', type=float, default=1, help='gradient clipping')
+parser.add_argument('-clip', type=float, default=0.01, help='gradient clipping')
 
 args = parser.parse_args()
 
@@ -113,7 +113,7 @@ log = {'iterations':[], 'epoch':[], 'validation':[], 'train_acc':[], 'val_acc':[
 ###############
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
-    for phase in ['train', 'val']:
+    for phase in ['train']: # for phase in ['train', 'val']:
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
@@ -126,13 +126,13 @@ for epoch in range(num_epochs):
         c = 0 # iteration
 
         with torch.set_grad_enabled(train):
-            for vid, cls in dataloader[phase]:
+            for vid, classification in dataloader[phase]:
                 print("mode:", phase)
                 print("epoch {} video {}".format(epoch, c*batch_size))
                 vid = vid.to(device)
-                
-                cls = cls.to(device)
-                print('cls', cls)
+   
+                classification = classification.to(device)
+                print('classification', classification)
                 outputs = model(vid)
                 outputs = outputs.squeeze(3).squeeze(2)
 
@@ -140,12 +140,12 @@ for epoch in range(num_epochs):
                 print('pred', pred)
 
                 # num of correct 
-                corr = torch.sum((pred == cls).int())
+                corr = torch.sum((pred == classification).int())
 
                 acc += corr.item()
                 tot += vid.size(0)
 
-                loss = F.cross_entropy(outputs, cls)
+                loss = F.cross_entropy(outputs, classification)
                 
                 if phase == 'train':
                     solver.zero_grad()
