@@ -72,21 +72,21 @@ class DS(data_utl.Dataset):
 
         # center crop 
         # applying random croppings -> different each time video is loaded
-        # if not self.random:
-        #     i = int(round((h-self.size)/2.))
-        #     j = int(round((w-self.size)/2.))
-        #     df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:-i, j:-j, :]
+        if not self.random:
+            i = int(round((h-self.size)/2.))
+            j = int(round((w-self.size)/2.))
+            df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:-i, j:-j, :]
+        else:
+            th = self.size
+            tw = self.size
+            #print(h, th, h-th)
+            i = random.randint(0, h - th) if h!=th else 0
+            j = random.randint(0, w - tw) if w!=tw else 0
+            df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:i+th, j:j+tw, :]
 
-        # else:
-        #     th = self.size
-        #     tw = self.size
-        #     #print(h, th, h-th)
-        #     i = random.randint(0, h - th) if h!=th else 0
-        #     j = random.randint(0, w - tw) if w!=tw else 0
-        #     df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:i+th, j:j+tw, :]
-
-        #     if random.random() < 0.5:
-        #         df = np.flip(df, axis=2).copy()
+            # randomly flip video
+            if random.random() < 0.5:
+                df = np.flip(df, axis=2).copy()
 
         if self.mode == 'flow':
             #print(df[:,:,:,1:].mean())
@@ -112,4 +112,3 @@ class DS(data_utl.Dataset):
         
     def __len__(self):
         return len(self.data.keys())
-
