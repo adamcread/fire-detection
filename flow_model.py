@@ -6,6 +6,7 @@ import math
 
 import rep_flow_layer as rf
 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -16,8 +17,8 @@ import numpy as np
 import os
 import sys
 
-# ! USE AFTER TRAINING
 class SamePadding(nn.Module):
+
   def __init__(self, kernel_size, stride):
     super(SamePadding, self).__init__()
     self.kernel_size = kernel_size
@@ -55,28 +56,12 @@ class SamePadding(nn.Module):
     x = F.pad(x, pad)
     return x
 
-  
-
-class PrintLayer(nn.Module):
-    def __init__(self, debug):
-      super(PrintLayer, self).__init__()
-      self.debug = debug
-      
-    def forward(self, x):
-      print(self.debug)
-      if x.isnan().any():
-        quit()
-      return x
-    
-
-
 
 class Bottleneck3D(nn.Module):
   
   def __init__(self, inputs, filters, is_training, strides,
                use_projection=False, T=3, data_format='channels_last', non_local=False):
     """Bottleneck block variant for residual networks with BN after convolutions.
-
   Args:
     inputs: `Tensor` of size `[batch, channels, height, width]`.
     filters: `int` number of filters for the first two convolutions. Note that
@@ -90,7 +75,6 @@ class Bottleneck3D(nn.Module):
         filters and the resolution.
     data_format: `str` either "channels_first" for `[batch, channels, height,
         width]` or "channels_last for `[batch, height, width, channels]`.
-
   Returns:
     The output `Tensor` of the block.
   """
@@ -105,10 +89,10 @@ class Bottleneck3D(nn.Module):
       self.shortcut = nn.Sequential(SamePadding((1,1,1),(1,strides,strides)),
                                     nn.Conv3d(
                                       inputs, filters_out, kernel_size=1, stride=(1,strides,strides), bias=False, padding=0),
+                                    nn.BatchNorm3d(filters_out),
                                     nn.BatchNorm3d(filters_out)) # there are two, due to old models having it. To load weights, 2 batch norms are needed here...
     
-    self.layers = nn.Sequential(
-                                SamePadding((T,1,1), (1,1,1)),
+    self.layers = nn.Sequential(SamePadding((T,1,1), (1,1,1)),
                                 nn.Conv3d(inputs, filters, kernel_size=(T,1,1), stride=1, padding=(0,0,0), bias=False), #1
                                 nn.BatchNorm3d(filters), #2
                                 nn.ReLU(),
@@ -117,7 +101,7 @@ class Bottleneck3D(nn.Module):
                                 nn.BatchNorm3d(filters),#6
                                 nn.ReLU(),
                                 nn.Conv3d(filters, 4*filters, kernel_size=1, stride=1, bias=False, padding=0),#8
-                                nn.BatchNorm3d(4*filters))
+                                nn.BatchNorm3d(4*filters))#9
     
 
   def forward(self, x):
@@ -130,8 +114,7 @@ class Bottleneck3D(nn.Module):
     return F.relu(self.layers(x) + res)
 
 
-
-
+  
 class Block3D(nn.Module):
   def __init__(self, inputs, filters, block_fn, blocks, strides, is_training, name,
                    data_format='channels_last', non_local=0):
@@ -148,7 +131,6 @@ class Block3D(nn.Module):
     name: `str`name for the Tensor output of the block layer.
     data_format: `str` either "channels_first" for `[batch, channels, height,
         width]` or "channels_last for `[batch, height, width, channels]`.
-
   Returns:
     The output `Tensor` of the block layer.
     """
@@ -166,8 +148,8 @@ class Block3D(nn.Module):
       # only use 1 3D conv per 2 residual blocks (per Non-local NN paper)
       T = (3 if T==1 else 1)
     
+
   def forward(self, x):
-    # print(x)
     for block in self.blocks:
       x = block(x)
     return x
@@ -178,7 +160,6 @@ class ResNet3D(nn.Module):
                data_format='channels_last', non_local=[], rep_flow=[],
                dropout_keep_prob=0.5):
     """Generator for ResNet v1 models.
-
   Args:
     block_fn: `function` for the block to use within the model. Either
         `residual_block` or `bottleneck_block`.
@@ -188,7 +169,6 @@ class ResNet3D(nn.Module):
     num_classes: `int` number of possible classes for image classification.
     data_format: `str` either "channels_first" for `[batch, channels, height,
         width]` or "channels_last for `[batch, height, width, channels]`.
-
   Returns:
     Model `function` that takes in `inputs` and `is_training` and returns the
     output `Tensor` of the ResNet model.
@@ -200,7 +180,8 @@ class ResNet3D(nn.Module):
     #self.rep_flow = rep_flow_layer.rep_flow(inputs, rep_flow[0], is_training, bottleneck=1, data_format=data_format, use_last_conv=False)
 
     """Creation of the model graph."""
-    self.stem = nn.Conv3d(3, 64, kernel_size=7, bias=False, stride=2)
+    self.stem = nn.Conv3d(
+      3, 64, kernel_size=7, bias=False, stride=2)
     
     self.bn1 = nn.BatchNorm3d(64, eps=0.001, momentum=0.01)
     self.relu = nn.ReLU(inplace=True)
@@ -211,78 +192,55 @@ class ResNet3D(nn.Module):
     self.rep_flow = rf.FlowLayer(512)
 
     # res 2
+    inputs = 64
     self.res2 = Block3D(
-      inputs=64, filters=64, block_fn=block_fn, blocks=layers[0],
+      inputs=inputs, filters=64, block_fn=block_fn, blocks=layers[0],
       strides=1, is_training=is_training, name='block_group1',
-      data_format=data_format, non_local=non_local[0]
-    )
+      data_format=data_format, non_local=non_local[0])
     
     # res 3
+    inputs = 64*4
     self.res3 = Block3D(
-      inputs=64*4, filters=128, block_fn=block_fn, blocks=layers[1],
+      inputs=inputs, filters=128, block_fn=block_fn, blocks=layers[1],
       strides=2, is_training=is_training, name='block_group2',
       data_format=data_format, non_local=non_local[1])
 
     # res 4
+    inputs = 128*4
     self.res4 = Block3D(
-      inputs=128*4, filters=256, block_fn=block_fn, blocks=layers[2],
+      inputs=inputs, filters=256, block_fn=block_fn, blocks=layers[2],
       strides=2, is_training=is_training, name='block_group3',
       data_format=data_format, non_local=non_local[2])
 
     # res 5
+    inputs = 256*4
     self.res5 = Block3D(
-        inputs=256*4, filters=512, block_fn=block_fn, blocks=layers[3],
+        inputs=inputs, filters=512, block_fn=block_fn, blocks=layers[3],
         strides=2, is_training=is_training, name='block_group4',
         data_format=data_format, non_local=non_local[3])
 
     self.dropout = nn.Dropout(0.5)
-
-    # add classication layers 
-    self.classify1 = nn.Conv3d(512*4, num_classes, kernel_size=1, stride=1)
-    # self.classify2 = nn.Conv3d(512, 128, kernel_size=1, stride=1)
-    # self.classify3 = nn.Conv3d(128, 32, kernel_size=1, stride=1)
-    # self.classify4 = nn.Conv3d(32, 8, kernel_size=1, stride=1)
-    # self.classify5 = nn.Conv3d(8, num_classes, kernel_size=1, stride=1)
+    self.classify = nn.Conv3d(512*4, num_classes, kernel_size=1, stride=1)
 
   def forward(self, x):
-    # print("size1", x.size())
+    print(x.size())
     x = self.stem(x)
     x = self.bn1(x)
     x = F.relu(x)
-    # print("size2", x.size())
+    print(x.size())
     x = self.maxpool(self.pad(x))
-    # print("size3", x.size())
+    print(x.size())
     x = self.res2(x)
     x = self.res3(x)
 
     x = self.rep_flow(x)
-    # print("INNER UPPER", x)
 
     x = self.res4(x)
     x = self.res5(x)
-
-    # print("mean1", x)
-    x = x.mean(3)
-    # print("mean1", x)
-    x = x.mean(3)
-
-    # print("mean", x)
-    x = torch.unsqueeze(x, 3)
-    x = torch.unsqueeze(x, 3) # spatial average
-    # print("unsqueezed twos", x)
-    
+    x = x.mean(3).mean(3).unsqueeze(3).unsqueeze(3) # spatial average
     x = self.dropout(x)
-    x = self.classify1(x) 
-    # x = self.classify2(x) 
-    # x = self.classify3(x) 
-    # x = self.classify4(x)
-    # x = self.classify5(x)
-    
-    # print(c)
+    x = self.classify(x)
     x = x.mean(2) # temporal average
-    # print("outputs>", x)
-
-    # print("INNER", x)
     return x
 
 
@@ -303,22 +261,3 @@ def resnet_3d_v1(resnet_depth, num_classes, data_format='channels_last', is_3d=T
   params = model_params[resnet_depth]
   return ResNet3D(
     params['block'], params['layers'], num_classes, data_format, non_local, rep_flow)
-
-
-
-if __name__ == '__main__':
-  net = resnet_3d_v1(50, 400)
-
-  net.load_state_dict(torch.load('models/rep_flow.pt'))
-  
-  data = np.load('data/v_CricketShot_g04_c01_rgb.npy')
-  data = np.transpose(data, (0,4,1,2,3))
-  tmp = torch.from_numpy(data)
-  net.eval()
-  with torch.no_grad():
-    predclass = torch.argmax(net(tmp).squeeze())
-
-  with open('data/label_map.txt') as f:
-    classes = f.readlines()
-
-  print(classes[predclass])

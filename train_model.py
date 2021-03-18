@@ -39,7 +39,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 ##################
 # model = flow_2p1d_resnets.resnet50(pretrained=False, mode=args.mode, n_iter=args.niter, learnable=eval(args.learnable), num_classes=400)
 model = flow_model.resnet_3d_v1(
-    resnet_depth=50, # taken from resnet_3d_v1 definition
+    resnet_depth=200, # taken from resnet_3d_v1 definition
     num_classes=2
 )
 
@@ -111,7 +111,7 @@ log = {'iterations':[], 'epoch':[], 'validation':[], 'train_acc':[], 'val_acc':[
 ###############
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
-    for phase in ['train', 'val']:
+    for phase in ['train', 'val']: # for phase in ['train', 'val']:
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
