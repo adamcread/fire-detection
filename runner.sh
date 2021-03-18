@@ -8,6 +8,6 @@
 #SBATCH -t 12:00:00
 
 source /etc/profile 
-module load cuda/10.1
+module load cuda/11.1
 source env/bin/activate
 python train_model.py

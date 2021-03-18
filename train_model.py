@@ -111,7 +111,7 @@ log = {'iterations':[], 'epoch':[], 'validation':[], 'train_acc':[], 'val_acc':[
 ###############
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
-    for phase in ['train']: # for phase in ['train', 'val']:
+    for phase in ['train', 'val']:
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
