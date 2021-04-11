@@ -11,7 +11,7 @@ import json
 
 
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, mode='rgb', length=64, random=True, model='2d', size=24):
+    def __init__(self, split_file, root, mode='rgb', length=1, random=True, model='2d', size=24):
         with open(split_file, 'r') as f: 
             self.data = json.load(f) # get video paths from json
 
@@ -31,7 +31,7 @@ class DS(data_utl.Dataset):
         self.root = root
         self.mode = mode
         self.model = model
-        self.length = length
+        self.length = length # length of videos
         self.random = random
         self.size = size
 
@@ -52,7 +52,8 @@ class DS(data_utl.Dataset):
         
         # loading vid into lintel
         # obtaining dataframe width and height of video
-        df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random, num_frames=self.length*2)
+        # df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random, num_frames=self.length*2)
+        df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random)
 
         # interpret buffer as 1 dimensional array
         df = np.frombuffer(df, dtype=np.uint8) # unsigned 8 bit integer
@@ -72,6 +73,9 @@ class DS(data_utl.Dataset):
 
         # center crop 
         # applying random croppings -> different each time video is loaded
+
+        print(df.shape[0]/(h*w*3))
+        print("l", self.length * 2)
         if not self.random:
             i = int(round((h-self.size)/2.))
             j = int(round((w-self.size)/2.))
@@ -84,7 +88,7 @@ class DS(data_utl.Dataset):
             j = random.randint(0, w - tw) if w!=tw else 0
             df = np.reshape(df, newshape=(self.length*2, h, w, 3))[::2, i:i+th, j:j+tw, :]
 
-            # randomly flip video
+            # randomly flip
             if random.random() < 0.5:
                 df = np.flip(df, axis=2).copy()
 

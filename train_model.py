@@ -13,11 +13,11 @@ parser.add_argument('-mode', type=str, default='rgb', help='rgb or flow')
 parser.add_argument('-model', type=str, default='3d')
 parser.add_argument('-exp_name', type=str)
 parser.add_argument('-batch_size', type=int, default=24)
-parser.add_argument('-length', type=int, default=16)
+parser.add_argument('-length', type=int, default=512)
 parser.add_argument('-learnable', type=str, default='[0,0,0,0,0]')
 parser.add_argument('-lr', type=float, default=0.01)
 parser.add_argument('-niter', type=int)
-parser.add_argument('-clip', type=float, default=0.01, help='gradient clipping')
+parser.add_argument('-clip', type=float, default=0.1, help='gradient clipping')
 
 args = parser.parse_args()
 
@@ -48,7 +48,7 @@ batch_size = args.batch_size
 
 from loader import DS
 
-train = './fire_train.json' # json containing videos for training
+train = './test2.json' # json containing videos for training
 val = './fire_val.json' # json containing videos for evaluation
 root = './dataset' # path to videos
 
@@ -162,7 +162,7 @@ for epoch in range(num_epochs):
         else:
             log['validation'].append(tloss/c)
             log['val_acc'].append(acc/tot)
-            print('val loss', tloss, 'acc', acc/tot)
+            print('val loss', tloss/c, 'acc', acc/tot)
             lr_sched.step(tloss/c)
     
     with open(os.path.join(log_path,'log.json'), 'w') as out:
