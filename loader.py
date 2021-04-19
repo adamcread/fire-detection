@@ -11,20 +11,11 @@ import json
 
 
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, mode='rgb', length=1, random=True, model='2d', size=24):
+    def __init__(self, split_file, root, length, mode='rgb', random=True, model='2d', size=24):
         with open(split_file, 'r') as f: 
             self.data = json.load(f) # get video paths from json
 
         self.vids = [k for k in self.data.keys()] # store video paths from json in list
-
-
-        if mode == 'flow': # if flow do what?
-            new_data = {}
-            self.vids = ['flow'+v[3:] for v in self.vids] # remap videos to be flow...{vid_path}
-            for v in self.data.keys():
-                new_data['flow'+v[3:]] = self.data[v] # add labels to flow
-
-            self.data = new_data
         
         # save init variables
         self.split_file = split_file
@@ -38,12 +29,6 @@ class DS(data_utl.Dataset):
     def __getitem__(self, index):
         vid = self.vids[index] # get video at correct index
         classification = self.data[vid] # get label from correct vid
-
-        if not os.path.exists(os.path.join(self.root, vid)): # if vid cannot be found as it's flow?
-            if self.mode == 'flow' and self.model == '2d':
-                return np.zeros((3, 20, self.size, self.size), dtype=np.float32), 0 # return zeros if not found
-            elif self.mode == 'flow' and self.model == '3d':
-                return np.zeros((2, self.length, self.size, self.size), dtype=np.float32), 0 # return zeros if not found
         
         # open path now video must exist
         with open(os.path.join(self.root, vid), 'rb') as f:
@@ -53,29 +38,12 @@ class DS(data_utl.Dataset):
         # loading vid into lintel
         # obtaining dataframe width and height of video
         # df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random, num_frames=self.length*2)
-        df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random)
+        df, w, h, _ = lintel.loadvid(enc_vid, should_random_seek=self.random, num_frames=self.length*2) # ! GET RID OF RANDOM
 
         # interpret buffer as 1 dimensional array
-        df = np.frombuffer(df, dtype=np.uint8) # unsigned 8 bit integer
+        # convert from buffer to numpy array with int
+        df = np.frombuffer(df, dtype=np.uint8) 
 
-        # if w < 128 or h < 128 or h > 512 or w > 512: # if video too big or too small
-        #     # crop df to 128x128
-        #     df = np.zeros(
-        #                 (self.length*2, # number of frames?
-        #                 128, # height
-        #                 128, # width
-        #                 3), # colour channels?
-        #                 dtype=np.uint8
-        #     )
-
-        #     w = h = 128
-        #     classification = 0 # set classification to 0 if video is cropped
-
-        # center crop 
-        # applying random croppings -> different each time video is loaded
-
-        print(df.shape[0]/(h*w*3))
-        print("l", self.length * 2)
         if not self.random:
             i = int(round((h-self.size)/2.))
             j = int(round((w-self.size)/2.))
@@ -91,18 +59,6 @@ class DS(data_utl.Dataset):
             # randomly flip
             if random.random() < 0.5:
                 df = np.flip(df, axis=2).copy()
-
-        if self.mode == 'flow':
-            #print(df[:,:,:,1:].mean())
-            #exit()
-            # only take the 2 channels corresponding to flow (x,y)
-            # t+1, ..., t
-            df = df[:,:,:,1:]
-            if self.model == '2d':
-                # this should be redone...
-                # stack 10 along channel axis
-                df = np.asarray([df[:10],df[2:12],df[4:14]]) # gives 3x10xHxWx2
-                df = df.transpose(0,1,4,2,3).reshape(3,20,self.size,self.size).transpose(0,2,3,1)
             
         # normalise data
         df = 1-2*(df.astype(np.float32)/255)
@@ -112,7 +68,8 @@ class DS(data_utl.Dataset):
             return df.transpose([0,3,1,2]), classification
         
         # 3d -> return CxTxHxW
-        return df.transpose([3,0,1,2]), classification
+        df = df.transpose([3,0,1,2])
+        return df, classification
         
     def __len__(self):
         return len(self.data.keys())

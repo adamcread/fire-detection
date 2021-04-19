@@ -8,15 +8,10 @@ import json
 import time
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-system', type=str, default='fire')
-parser.add_argument('-mode', type=str, default='rgb', help='rgb or flow')
-parser.add_argument('-model', type=str, default='3d')
-parser.add_argument('-exp_name', type=str)
-parser.add_argument('-batch_size', type=int, default=4)
+
+parser.add_argument('-batch_size', type=int, default=1)
 parser.add_argument('-length', type=int, default=16)
-parser.add_argument('-learnable', type=str, default='[0,0,0,0,0]')
 parser.add_argument('-lr', type=float, default=0.01)
-parser.add_argument('-niter', type=int)
 parser.add_argument('-clip', type=float, default=0.1, help='gradient clipping')
 
 args = parser.parse_args()
@@ -46,7 +41,7 @@ model = flow_model.resnet_3d_v1(
 model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
 
-from loader import DS
+from loader_window import DS
 
 train = './train.json' # json containing videos for training
 val = './test.json' # json containing videos for evaluation
@@ -56,21 +51,16 @@ root = './resized_dataset/' # path to videos
 dataset_tr = DS(
         split_file=train, # videos selected for loading
         root=root, # root dir to find videos
-        length=args.length, # number of videos?
-        model=args.model, # 2d/3d
-        mode=args.mode # rgb or flow?
+        length=args.length # number of videos?
 ) 
 dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
 dataset_val = DS(
         split_file=val, 
         root=root, 
-        length=args.length, 
-        model=args.model, 
-        mode=args.mode
+        length=args.length
 ) # load evaluation videos into object
 vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-
 
 dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
 print("DATA LOADED")
@@ -102,43 +92,43 @@ for epoch in range(num_epochs):
         c = 0 # iteration
 
         with torch.set_grad_enabled(train):
-            for vid, classification in dataloader[phase]:
-                print("video shape", vid.shape)
-
+            for vids, classification in dataloader[phase]:
                 print("mode:", phase)
                 print("epoch {} video {}".format(epoch, c*batch_size))
-                vid = vid.to(device)
-   
-                classification = classification.to(device)
-                print('classification', classification)
-                outputs = model(vid)
-                outputs = outputs.squeeze(3).squeeze(2)
 
-                pred = torch.max(outputs, dim=1)[1] 
-                print('pred', pred)
+                for vid in vids:
+                    vid = vid.to(device)
+    
+                    classification = classification.to(device)
+                    # print('classification', classification)
+                    outputs = model(vid)
+                    outputs = outputs.squeeze(3).squeeze(2)
 
-                # num of correct 
-                corr = torch.sum((pred == classification).int())
+                    pred = torch.max(outputs, dim=1)[1] 
+                    # print('pred', pred)
 
-                acc += corr.item()
-                tot += vid.size(0)
+                    # num of correct 
+                    corr = torch.sum((pred == classification).int())
 
-                loss = F.cross_entropy(outputs, classification)
-                
-                if phase == 'train':
-                    solver.zero_grad()
-                    loss.backward()
+                    acc += corr.item()
+                    tot += vid.size(0)
 
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                    solver.step()
+                    loss = F.cross_entropy(outputs, classification)
+                    
+                    if phase == 'train':
+                        solver.zero_grad()
+                        loss.backward()
 
-                tloss += loss.item()
-                c += 1
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                        solver.step()
+
+                    tloss += loss.item()
+                    c += 1
             
         if phase == 'train':
             print('train loss', tloss/c, 'acc', acc/tot)
         else:
             print('val loss', tloss/c, 'acc', acc/tot)
             lr_sched.step(tloss/c)
-
+    
     lr_sched.step(loss/c)
