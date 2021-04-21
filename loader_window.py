@@ -22,6 +22,8 @@ class DS(data_utl.Dataset):
         vid = self.vids[index]
         classification = self.data[vid]
 
+        print(vid)
+
         vid_path = os.path.join(self.root, vid)
 
         with open(vid_path, 'rb') as f:
@@ -54,3 +56,16 @@ class DS(data_utl.Dataset):
     
     def __len__(self):
         return len(self.data.keys())
+
+
+dataset = DS(
+        split_file = "./json/train.json",
+        root="./dataset/resized_dataset/kim-lee-2019/",
+        length=16
+)
+
+for i in range(len(dataset)):
+    print(i)
+    x = dataset[i]
+
+
