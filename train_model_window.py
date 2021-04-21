@@ -4,8 +4,7 @@ import argparse
 import inspect
 import datetime
 import json
-
-import time
+from statistics import mode
 
 parser = argparse.ArgumentParser()
 
@@ -43,9 +42,9 @@ batch_size = args.batch_size
 
 from loader_window import DS
 
-train = './train.json' # json containing videos for training
-val = './test.json' # json containing videos for evaluation
-root = './resized_dataset/' # path to videos
+train = "./json/train.json" # json containing videos for training
+val = "./json/val.json" # json containing videos for evaluation
+root = "./dataset/resized_dataset/kim-lee-2019/" # path to videos
 
 # load training videos into object
 dataset_tr = DS(
@@ -55,11 +54,12 @@ dataset_tr = DS(
 ) 
 dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
+# load evaluation videos into object
 dataset_val = DS(
         split_file=val, 
         root=root, 
         length=args.length
-) # load evaluation videos into object
+) 
 vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
 dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
@@ -79,7 +79,7 @@ lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
 
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
-    for phase in ['train', 'val']: # for phase in ['train', 'val']:
+    for phase in ['val']:
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
@@ -87,7 +87,7 @@ for epoch in range(num_epochs):
             model.eval()
             
         tloss = 0. # time loss for each iteration?
-        acc = 0. # accuracy/
+        acc = 0. # accuracy
         tot = 0 #total?
         c = 0 # iteration
 
@@ -95,36 +95,49 @@ for epoch in range(num_epochs):
             for vids, classification in dataloader[phase]:
                 print("mode:", phase)
                 print("epoch {} video {}".format(epoch, c*batch_size))
+                classification = classification.to(device) # video prediction
+                vid_preds = []
 
                 for vid in vids:
                     vid = vid.to(device)
     
-                    classification = classification.to(device)
-                    # print('classification', classification)
                     outputs = model(vid)
                     outputs = outputs.squeeze(3).squeeze(2)
 
                     pred = torch.max(outputs, dim=1)[1] 
-                    # print('pred', pred)
 
-                    # num of correct 
-                    corr = torch.sum((pred == classification).int())
+                    if phase == "train":
+                        corr = torch.sum((pred == classification).int()) # number of correct videos
+                        acc += corr.item() # running tot of correctly classified
+                        tot += vid.size(0) # running tot of num of videos
+                        loss = F.cross_entropy(outputs, classification)
 
-                    acc += corr.item()
-                    tot += vid.size(0)
+                        print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
 
-                    loss = F.cross_entropy(outputs, classification)
-                    
-                    if phase == 'train':
                         solver.zero_grad()
                         loss.backward()
 
                         torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                         solver.step()
 
+                        tloss += loss.item()
+                        c += 1
+                    else:
+                        vid_preds.append(pred)
+            
+                if phase == "val":
+                    modal_pred = mode(vid_preds)
+
+                    corr = torch.sum((modal_pred == classification).int()) # number of correct videos
+                    acc += corr.item() # running tot of correctly classified
+                    tot += vid.size(0) # running tot of num of videos
+                    loss = F.cross_entropy(outputs, classification)
+
+                    print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
+
                     tloss += loss.item()
                     c += 1
-            
+
         if phase == 'train':
             print('train loss', tloss/c, 'acc', acc/tot)
         else:
