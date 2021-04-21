@@ -8,15 +8,10 @@ import json
 import time
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-system', type=str, default='fire')
-parser.add_argument('-mode', type=str, default='rgb', help='rgb or flow')
-parser.add_argument('-model', type=str, default='3d')
-parser.add_argument('-exp_name', type=str)
-parser.add_argument('-batch_size', type=int, default=4)
+
+parser.add_argument('-batch_size', type=int, default=1)
 parser.add_argument('-length', type=int, default=16)
-parser.add_argument('-learnable', type=str, default='[0,0,0,0,0]')
 parser.add_argument('-lr', type=float, default=0.01)
-parser.add_argument('-niter', type=int)
 parser.add_argument('-clip', type=float, default=0.1, help='gradient clipping')
 
 args = parser.parse_args()
@@ -32,12 +27,6 @@ import flow_model
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-##################
-#
-# Create model, dataset, and training setup
-#
-##################
-# model = flow_2p1d_resnets.resnet50(pretrained=False, mode=args.mode, n_iter=args.niter, learnable=eval(args.learnable), num_classes=400)
 model = flow_model.resnet_3d_v1(
     resnet_depth=200, # taken from resnet_3d_v1 definition
     num_classes=2
@@ -48,29 +37,25 @@ batch_size = args.batch_size
 
 from loader import DS
 
-train = './train.json' # json containing videos for training
-val = './test.json' # json containing videos for evaluation
-root = './resized_dataset/' # path to videos
+train = "./json/train.json" # json containing videos for training
+val = "./json/val.json" # json containing videos for evaluation
+root = "./dataset/resized_dataset/kim-lee-2019/" # path to videos
 
 # load training videos into object
 dataset_tr = DS(
         split_file=train, # videos selected for loading
         root=root, # root dir to find videos
         length=args.length, # number of videos?
-        model=args.model, # 2d/3d
-        mode=args.mode # rgb or flow?
 ) 
 dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
 
+# load evaluation videos into object
 dataset_val = DS(
         split_file=val, 
         root=root, 
         length=args.length, 
-        model=args.model, 
-        mode=args.mode
-) # load evaluation videos into object
+)
 vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
-
 
 dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
 print("DATA LOADED")

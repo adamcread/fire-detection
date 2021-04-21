@@ -8,7 +8,7 @@ import json
 import os
 
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, size=(100, 100), length=32):
+    def __init__(self, split_file, root, length=32):
         with open(split_file, 'r') as f:
             self.data = json.load(f)
         
@@ -17,7 +17,6 @@ class DS(data_utl.Dataset):
         self.split_file = split_file
         self.root = root
         self.length = length
-        self.size = size
 
     def __getitem__(self, index):
         vid = self.vids[index]

@@ -26,12 +26,6 @@ import flow_model
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-##################
-#
-# Create model, dataset, and training setup
-#
-##################
-# model = flow_2p1d_resnets.resnet50(pretrained=False, mode=args.mode, n_iter=args.niter, learnable=eval(args.learnable), num_classes=400)
 model = flow_model.resnet_3d_v1(
     resnet_depth=200, # taken from resnet_3d_v1 definition
     num_classes=2
