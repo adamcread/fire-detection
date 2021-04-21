@@ -70,9 +70,10 @@ solver = optim.SGD(
 
 # changes learning rate based on current descent
 lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
-
+print("hello1")
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
+    print("hello2")
     for phase in ['train', 'val']:
         train = (phase=='train') # enable grad or not
         if train: # train model
