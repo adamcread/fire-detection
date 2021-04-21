@@ -10,4 +10,4 @@
 source /etc/profile 
 module load cuda/11.1
 source env/bin/activate
-python train_model.py
+python train_model_window.py
