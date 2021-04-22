@@ -7,12 +7,15 @@ import numpy as np
 import json
 import os
 
+print("hello")
+
 class DS(data_utl.Dataset):
     def __init__(self, split_file, root, length=32):
         with open(split_file, 'r') as f:
             self.data = json.load(f)
         
         self.vids = [k for k in self.data.keys()]
+        print(self.vids)
 
         self.split_file = split_file
         self.root = root
@@ -38,10 +41,11 @@ class DS(data_utl.Dataset):
             start_frame = mult*self.length
 
             frame_nums = [x+start_frame for x in range(self.length)] 
+            print(frame_nums)
             df, width, height = lintel.loadvid_frame_nums(
                             enc_vid,
                             frame_nums = frame_nums,
-                            should_seek = False
+                            should_seek = True
             )
 
             df = np.frombuffer(df, dtype=np.uint8)
@@ -57,12 +61,15 @@ class DS(data_utl.Dataset):
     def __len__(self):
         return len(self.data.keys())
 
+print("running")
 
 dataset = DS(
-        split_file = "./json/train.json",
-        root="./dataset/resized_dataset/kim-lee-2019/",
+        split_file = "./json/loader_test.json",
+        root="./dataset/original_dataset/",
         length=16
 )
+
+print("data loaded")
 
 for i in range(len(dataset)):
     print(i)
