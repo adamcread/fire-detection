@@ -41,7 +41,6 @@ class DS(data_utl.Dataset):
             start_frame = mult*self.length
 
             frame_nums = [x+start_frame for x in range(self.length)] 
-            print(frame_nums)
             df, width, height = lintel.loadvid_frame_nums(
                             enc_vid,
                             frame_nums = frame_nums,
@@ -65,7 +64,7 @@ print("running")
 
 dataset = DS(
         split_file = "./json/loader_test.json",
-        root="./dataset/original_dataset/",
+        root="./dataset/test_dataset/",
         length=16
 )
 
