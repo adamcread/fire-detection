@@ -7,15 +7,12 @@ import numpy as np
 import json
 import os
 
-print("hello")
-
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, length=32):
+    def __init__(self, split_file, root, length=16):
         with open(split_file, 'r') as f:
             self.data = json.load(f)
         
         self.vids = [k for k in self.data.keys()]
-        print(self.vids)
 
         self.split_file = split_file
         self.root = root
@@ -59,19 +56,3 @@ class DS(data_utl.Dataset):
     
     def __len__(self):
         return len(self.data.keys())
-
-print("running")
-
-dataset = DS(
-        split_file = "./json/loader_test.json",
-        root="./dataset/test_dataset/",
-        length=16
-)
-
-print("data loaded")
-
-for i in range(len(dataset)):
-    print(i)
-    x = dataset[i]
-
-
