@@ -105,7 +105,7 @@ for epoch in range(num_epochs):
                 except:
                     video_pred = vid_preds[-1]
 
-                corr = torch.sum((modal_pred == classification).int()) # number of correct videos
+                corr = torch.sum((video_pred == classification).int()) # number of correct videos
                 acc += corr.item() # running tot of correctly classified
                 tot += vid.size(0) # running tot of num of videos
                 loss = F.cross_entropy(outputs, classification)
