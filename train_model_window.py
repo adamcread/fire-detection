@@ -100,9 +100,9 @@ for epoch in range(num_epochs):
                     pred = torch.max(outputs, dim=1)[1] 
                     vid_preds.append(pred)
                 
-                if vid_preds.count(0) != vid_preds.count(1):
+                try:
                     video_pred = mode(vid_preds)
-                else:
+                except:
                     video_pred = vid_preds[-1]
 
                 corr = torch.sum((modal_pred == classification).int()) # number of correct videos
@@ -112,14 +112,10 @@ for epoch in range(num_epochs):
 
                 print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
                 if train:
-                    print("solver")
                     solver.zero_grad()
-                    print("backward")
                     loss.backward()
 
-                    print("clip")
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                    print("step")
                     solver.step()
 
                 tloss += loss.item()
