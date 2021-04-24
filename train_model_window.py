@@ -99,8 +99,11 @@ for epoch in range(num_epochs):
 
                     pred = torch.max(outputs, dim=1)[1] 
                     vid_preds.append(pred)
-            
-                modal_pred = mode(vid_preds)
+                
+                if vid_preds.count(0) != vid_preds.count(1):
+                    video_pred = mode(vid_preds)
+                else:
+                    video_pred = vid_preds[-1]
 
                 corr = torch.sum((modal_pred == classification).int()) # number of correct videos
                 acc += corr.item() # running tot of correctly classified
