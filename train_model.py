@@ -39,7 +39,7 @@ from loader import DS
 
 train = "./json/train.json" # json containing videos for training
 val = "./json/val.json" # json containing videos for evaluation
-root = "./dataset/resized_dataset/kim-lee-2019/" # path to videos
+root = "./dataset/split_resized_dataset/" # path to videos
 
 # load training videos into object
 dataset_tr = DS(
@@ -88,19 +88,15 @@ for epoch in range(num_epochs):
 
         with torch.set_grad_enabled(train):
             for vid, classification in dataloader[phase]:
-                print("video shape", vid.shape)
-
                 print("mode:", phase)
                 print("epoch {} video {}".format(epoch, c*batch_size))
                 vid = vid.to(device)
    
                 classification = classification.to(device)
-                print('classification', classification)
                 outputs = model(vid)
                 outputs = outputs.squeeze(3).squeeze(2)
 
                 pred = torch.max(outputs, dim=1)[1] 
-                print('pred', pred)
 
                 # num of correct 
                 corr = torch.sum((pred == classification).int())
@@ -116,7 +112,8 @@ for epoch in range(num_epochs):
 
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                     solver.step()
-
+                
+                print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
                 tloss += loss.item()
                 c += 1
             

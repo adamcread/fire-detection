@@ -38,7 +38,7 @@ from loader_window import DS
 
 train = "./json/train.json" # json containing videos for training
 val = "./json/val.json" # json containing videos for evaluation
-root = "./dataset/split_resized_dataset" # path to videos
+root = "./dataset/split_resized_dataset/" # path to videos
 
 # load training videos into object
 dataset_tr = DS(
@@ -98,38 +98,29 @@ for epoch in range(num_epochs):
                     outputs = outputs.squeeze(3).squeeze(2)
 
                     pred = torch.max(outputs, dim=1)[1] 
-
-                    if phase == "train":
-                        corr = torch.sum((pred == classification).int()) # number of correct videos
-                        acc += corr.item() # running tot of correctly classified
-                        tot += vid.size(0) # running tot of num of videos
-                        loss = F.cross_entropy(outputs, classification)
-
-                        print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
-
-                        solver.zero_grad()
-                        loss.backward()
-
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                        solver.step()
-
-                        tloss += loss.item()
-                        c += 1
-                    else:
-                        vid_preds.append(pred)
+                    vid_preds.append(pred)
             
-                if phase == "val":
-                    modal_pred = mode(vid_preds)
+                modal_pred = mode(vid_preds)
 
-                    corr = torch.sum((modal_pred == classification).int()) # number of correct videos
-                    acc += corr.item() # running tot of correctly classified
-                    tot += vid.size(0) # running tot of num of videos
-                    loss = F.cross_entropy(outputs, classification)
+                corr = torch.sum((modal_pred == classification).int()) # number of correct videos
+                acc += corr.item() # running tot of correctly classified
+                tot += vid.size(0) # running tot of num of videos
+                loss = F.cross_entropy(outputs, classification)
 
-                    print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
+                print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
+                if train:
+                    print("solver")
+                    solver.zero_grad()
+                    print("backward")
+                    loss.backward()
 
-                    tloss += loss.item()
-                    c += 1
+                    print("clip")
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                    print("step")
+                    solver.step()
+
+                tloss += loss.item()
+                c += 1
 
         if phase == 'train':
             print('train loss', tloss/c, 'acc', acc/tot)
