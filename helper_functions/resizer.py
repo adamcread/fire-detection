@@ -1,8 +1,8 @@
 import os
 import moviepy.editor as mp
 
-root = "./dataset/split_dataset/kim-lee-2019/"
-dest = "./dataset/resized_dataset/test/"
+root = "./dataset/split_dataset/"
+dest = "./dataset/split_resized_dataset/"
 
 for vid_name in os.listdir(root):
     clip = mp.VideoFileClip(root + vid_name)
