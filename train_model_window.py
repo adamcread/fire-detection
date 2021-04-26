@@ -100,65 +100,68 @@ for epoch in range(num_epochs):
                 cap.release()
 
                 vid_preds = []
-                for mult in range(0, total_frames//args.length):
-                    start_frame = mult*args.length
+                try:
+                    for mult in range(0, total_frames//args.length):
+                        start_frame = mult*args.length
 
-                    frame_nums = [x+start_frame for x in range(args.length)] 
-                    df, width, height = lintel.loadvid_frame_nums(
-                                    enc_vid,
-                                    frame_nums = frame_nums,
-                                    should_seek = True
-                    )
+                        frame_nums = [x+start_frame for x in range(args.length)] 
+                        df, width, height = lintel.loadvid_frame_nums(
+                                        enc_vid,
+                                        frame_nums = frame_nums,
+                                        should_seek = True
+                        )
 
-                    df = np.frombuffer(df, dtype=np.uint8)
-                    df = np.reshape(df, newshape=(args.length, height, width, 3))
+                        df = np.frombuffer(df, dtype=np.uint8)
+                        df = np.reshape(df, newshape=(args.length, height, width, 3))
 
-                    df = 1-2*(df.astype(np.float32)/255)
-                    df = df.transpose([3,0,1,2])
+                        df = 1-2*(df.astype(np.float32)/255)
+                        df = df.transpose([3,0,1,2])
 
-                    df = np.expand_dims(df, 0)
+                        df = np.expand_dims(df, 0)
                     
-                    vid = torch.tensor(df)
+                        vid = torch.tensor(df)
                     
-                    vid = vid.to(device)
+                        vid = vid.to(device)
     
-                    outputs = model(vid)
-                    outputs = outputs.squeeze(3).squeeze(2)
+                        outputs = model(vid)
+                        outputs = outputs.squeeze(3).squeeze(2)
 
-                    pred = torch.max(outputs, dim=1)[1] 
+                        pred = torch.max(outputs, dim=1)[1] 
                     
-                    if train:
-                        corr = torch.sum((pred == classification).int()) # number of correct videos
+                        if train:
+                            corr = torch.sum((pred == classification).int()) # number of correct videos
+                            acc += corr.item() # running tot of correctly classified
+                            tot += vid.size(0) # running tot of num of videos
+                            loss = F.cross_entropy(outputs, classification)
+
+                            solver.zero_grad()
+                            loss.backward()
+
+                            torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                            solver.step()
+
+                            tloss += loss.item()
+                            c += 1
+                        else:
+                            vid_preds.append(pred)
+                
+                    if not train:
+                        try:
+                            video_pred = mode(vid_preds)
+                        except:
+                            video_pred = vid_preds[-1]
+
+                        corr = torch.sum((video_pred == classification).int()) # number of correct videos
                         acc += corr.item() # running tot of correctly classified
                         tot += vid.size(0) # running tot of num of videos
                         loss = F.cross_entropy(outputs, classification)
 
-                        solver.zero_grad()
-                        loss.backward()
-
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                        solver.step()
-
                         tloss += loss.item()
                         c += 1
-                    else:
-                        vid_preds.append(pred)
                 
-                if not train:
-                    try:
-                        video_pred = mode(vid_preds)
-                    except:
-                        video_pred = vid_preds[-1]
-
-                    corr = torch.sum((video_pred == classification).int()) # number of correct videos
-                    acc += corr.item() # running tot of correctly classified
-                    tot += vid.size(0) # running tot of num of videos
-                    loss = F.cross_entropy(outputs, classification)
-
-                    tloss += loss.item()
-                    c += 1
-                
-                print("epoch {} video {}".format(epoch, c*batch_size))
+                    print("epoch {} video {}".format(epoch, c*batch_size))
+                except:
+                    print("video skipped", vid_path)
 
         if phase == 'train':
             print('train loss', tloss/c, 'acc', acc/tot)
