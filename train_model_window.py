@@ -114,8 +114,12 @@ for epoch in range(num_epochs):
                     df = np.reshape(df, newshape=(args.length, height, width, 3))
 
                     df = 1-2*(df.astype(np.float32)/255)
-                    vid = df.transpose([3,0,1,2])
+                    df = df.transpose([3,0,1,2])
 
+                    df = np.expand_dims(df, 0)
+                    
+                    vid = torch.tensor(df)
+                    
                     vid = vid.to(device)
     
                     outputs = model(vid)

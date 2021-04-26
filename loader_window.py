@@ -20,8 +20,7 @@ class DS(data_utl.Dataset):
         classification = self.data[vid]
 
         vid_path = os.path.join(self.root, vid)
-        print(vid_path)
-        
+                
         return vid_path, classification
     
     def __len__(self):
