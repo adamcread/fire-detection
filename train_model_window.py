@@ -94,7 +94,7 @@ for epoch in range(num_epochs):
                 with open(vid_path[0], 'rb') as f:
                     enc_vid = f.read()
 
-                cap = cv2.VideoCapture(vid_path)
+                cap = cv2.VideoCapture(vid_path[0])
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 cap.release()
 
