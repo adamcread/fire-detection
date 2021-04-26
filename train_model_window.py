@@ -5,6 +5,7 @@ import inspect
 import datetime
 import json
 from statistics import mode
+import cv2
 
 parser = argparse.ArgumentParser()
 

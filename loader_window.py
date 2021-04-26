@@ -2,7 +2,6 @@ import torch
 import torch.utils.data as data_utl
 
 import lintel
-import cv2
 import numpy as np
 import json
 import os
