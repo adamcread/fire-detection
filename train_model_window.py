@@ -85,41 +85,74 @@ for epoch in range(num_epochs):
         c = 0 # iteration
 
         with torch.set_grad_enabled(train):
-            for vids, classification in dataloader[phase]:
+            for vid_path, classification in dataloader[phase]:
                 print("mode:", phase)
                 print("epoch {} video {}".format(epoch, c*batch_size))
                 classification = classification.to(device) # video prediction
-                vid_preds = []
 
-                for vid in vids:
+                with open(vid_path[0], 'rb') as f:
+                    enc_vid = f.read()
+
+                cap = cv2.VideoCapture(vid_path)
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                cap.release()
+
+                vid_preds = []
+                for mult in range(0, total_frames//args.length):
+                    start_frame = mult*args.length
+
+                    frame_nums = [x+start_frame for x in range(args.length)] 
+                    df, width, height = lintel.loadvid_frame_nums(
+                                    enc_vid,
+                                    frame_nums = frame_nums,
+                                    should_seek = True
+                    )
+
+                    df = np.frombuffer(df, dtype=np.uint8)
+                    df = np.reshape(df, newshape=(args.length, height, width, 3))
+
+                    df = 1-2*(df.astype(np.float32)/255)
+                    vid = df.transpose([3,0,1,2])
+
                     vid = vid.to(device)
     
                     outputs = model(vid)
                     outputs = outputs.squeeze(3).squeeze(2)
 
                     pred = torch.max(outputs, dim=1)[1] 
-                    vid_preds.append(pred)
+                    
+                    if train:
+                        corr = torch.sum((pred == classification).int()) # number of correct videos
+                        acc += corr.item() # running tot of correctly classified
+                        tot += vid.size(0) # running tot of num of videos
+                        loss = F.cross_entropy(outputs, classification)
+
+                        solver.zero_grad()
+                        loss.backward()
+
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                        solver.step()
+
+                        tloss += loss.item()
+                        c += 1
+                    else:
+                        vid_preds.append(pred)
                 
-                try:
-                    video_pred = mode(vid_preds)
-                except:
-                    video_pred = vid_preds[-1]
+                if not train:
+                    try:
+                        video_pred = mode(vid_preds)
+                    except:
+                        video_pred = vid_preds[-1]
 
-                corr = torch.sum((video_pred == classification).int()) # number of correct videos
-                acc += corr.item() # running tot of correctly classified
-                tot += vid.size(0) # running tot of num of videos
-                loss = F.cross_entropy(outputs, classification)
+                    corr = torch.sum((video_pred == classification).int()) # number of correct videos
+                    acc += corr.item() # running tot of correctly classified
+                    tot += vid.size(0) # running tot of num of videos
+                    loss = F.cross_entropy(outputs, classification)
 
-                print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
-                if train:
-                    solver.zero_grad()
-                    loss.backward()
-
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                    solver.step()
-
-                tloss += loss.item()
-                c += 1
+                    tloss += loss.item()
+                    c += 1
+                
+                print("epoch {} video {}".format(epoch, c*batch_size))
 
         if phase == 'train':
             print('train loss', tloss/c, 'acc', acc/tot)

@@ -22,37 +22,10 @@ class DS(data_utl.Dataset):
         vid = self.vids[index]
         classification = self.data[vid]
 
-        print(vid)
-
         vid_path = os.path.join(self.root, vid)
-
-        with open(vid_path, 'rb') as f:
-            enc_vid = f.read()
-
-        cap = cv2.VideoCapture(vid_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        cap.release()
-
-        full_window = []
-        for mult in range(0, total_frames//self.length):
-            start_frame = mult*self.length
-
-            frame_nums = [x+start_frame for x in range(self.length)] 
-            df, width, height = lintel.loadvid_frame_nums(
-                            enc_vid,
-                            frame_nums = frame_nums,
-                            should_seek = True
-            )
-
-            df = np.frombuffer(df, dtype=np.uint8)
-            df = np.reshape(df, newshape=(self.length, height, width, 3))
-
-            df = 1-2*(df.astype(np.float32)/255)
-            df = df.transpose([3,0,1,2])
-
-            full_window.append(df)
+        print(vid_path)
         
-        return full_window, classification
+        return vid_path, classification
     
     def __len__(self):
         return len(self.data.keys())
