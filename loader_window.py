@@ -57,8 +57,12 @@ class DS(data_utl.Dataset):
     def __len__(self):
         return len(self.data.keys())
 
+<<<<<<< HEAD
 train = "./json/test1aab.json" # json containing videos for training
 val = "./json/val.json" # json containing videos for evaluation
+=======
+train = "./json/test1aaa.json" # json containing videos for training
+>>>>>>> dac0df6c67d71f3a3d4cac1b3f6b5ad0fec2ce07
 root = "./dataset/split_resized_dataset/" # path to videos
 
 # load training videos into object
@@ -66,7 +70,11 @@ dataset_tr = DS(
         split_file=train, # videos selected for loading
         root=root, # root dir to find videos
         length=16 # number of videos?
+<<<<<<< HEAD
 )  
+=======
+) 
+>>>>>>> dac0df6c67d71f3a3d4cac1b3f6b5ad0fec2ce07
 
 print("training")
 for i in range(len(dataset_tr)):
