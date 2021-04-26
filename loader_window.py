@@ -57,8 +57,7 @@ class DS(data_utl.Dataset):
     def __len__(self):
         return len(self.data.keys())
 
-train = "./json/train.json" # json containing videos for training
-val = "./json/val.json" # json containing videos for evaluation
+train = "./json/test1aaa.json" # json containing videos for training
 root = "./dataset/split_resized_dataset/" # path to videos
 
 # load training videos into object
@@ -68,19 +67,7 @@ dataset_tr = DS(
         length=16 # number of videos?
 ) 
 
-# load training videos into object
-dataset_val = DS(
-        split_file=val, # videos selected for loading
-        root=root, # root dir to find videos
-        length=16 # number of videos?
-) 
-
 print("training")
 for i in range(len(dataset_tr)):
     x = dataset_tr[i] 
     print("tr", i)
-
-print("val")
-for j in range(len(dataset_val)):
-    x = dataset_val[i]
-    print("val", j)
