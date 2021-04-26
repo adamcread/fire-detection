@@ -2,8 +2,8 @@ import os
 import json
 import random
 
-root = "./dataset/resized_dataset/test/"
-dest = "./json/"
+root = "./dataset/split_resized_dataset/"
+dest = "./"
 
 test_split = 0.80
 ub = 100
