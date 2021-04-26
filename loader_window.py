@@ -63,8 +63,10 @@ class DS(data_utl.Dataset):
     def __len__(self):
         return len(self.data.keys())
 
-# train = "./json/test1aaa.json" # json containing videos for training
-root = "./dataset/split_resized_dataset/" # path to videos
+
+train = "./json/test1aab.json" # json containing videos for training
+val = "./json/val.json" # json containing videos for evaluation
+
 
 # load training videos into object
 dataset_tr = DS(
