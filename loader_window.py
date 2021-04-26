@@ -75,10 +75,12 @@ dataset_val = DS(
         length=16 # number of videos?
 ) 
 
+print("training")
 for i in range(len(dataset_tr)):
     x = dataset_tr[i] 
     print("tr", i)
 
+print("val")
 for j in range(len(dataset_val)):
     x = dataset_val[i]
     print("val", j)

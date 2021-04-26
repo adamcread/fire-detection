@@ -3,7 +3,7 @@ import json
 import random
 
 root = "./dataset/split_resized_dataset/"
-dest = "./"
+dest = "./json/"
 
 test_split = 0.80
 ub = 100
