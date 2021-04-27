@@ -25,7 +25,7 @@ import flow_model
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = flow_model.resnet_3d_v1(
-    resnet_depth=200, # taken from resnet_3d_v1 definition
+    resnet_depth=18, # taken from resnet_3d_v1 definition
     num_classes=2
 )
 
@@ -107,7 +107,7 @@ for epoch in range(num_epochs):
 
                         solver.zero_grad()
                         loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                        # torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                         solver.step()
                     
                     pred = torch.max(outputs, dim=1)[1] 

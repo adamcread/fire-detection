@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('-batch_size', type=int, default=1)
 parser.add_argument('-length', type=int, default=16)
-parser.add_argument('-lr', type=float, default=0.01)
+parser.add_argument('-lr', type=float, default=0.01, help="learning rate")
 parser.add_argument('-clip', type=float, default=0.1, help='gradient clipping')
 
 args = parser.parse_args()
@@ -24,7 +24,7 @@ import flow_model
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = flow_model.resnet_3d_v1(
-    resnet_depth=200, # taken from resnet_3d_v1 definition
+    resnet_depth=18, # taken from resnet_3d_v1 definition
     num_classes=2
 )
 
@@ -113,7 +113,7 @@ for epoch in range(num_epochs):
                     solver.zero_grad()
                     loss.backward()
 
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                    # torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                     solver.step()
                 
                 tloss += loss.item()
