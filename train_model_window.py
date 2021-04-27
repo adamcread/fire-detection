@@ -44,7 +44,7 @@ dataset_tr = DS(
         root=root, # root dir to find videos
         length=args.length # number of videos?
 ) 
-dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
 # load evaluation videos into object
 dataset_val = DS(
@@ -52,7 +52,7 @@ dataset_val = DS(
         root=root, 
         length=args.length
 ) 
-vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
 dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
 print("DATA LOADED")
