@@ -86,20 +86,34 @@ for epoch in range(num_epochs):
         tot = 0 #total?
         c = 0 # iteration
 
+         # 0 - false negative 
+        # 1 - true negative
+        # 2 - false positive
+        # 3 - true positive
+        quant_results = [0, 0, 0, 0]
+
         with torch.set_grad_enabled(train):
             for vids, classification in dataloader[phase]:
                 classification = classification.to(device) # video prediction
-                vid_preds = []
 
+                vid_preds = []
                 for vid in vids:
                     vid = vid.to(device)
     
                     outputs = model(vid)
                     outputs = outputs.squeeze(3).squeeze(2)
 
+                    if train:
+                        loss = F.cross_entropy(outputs, classification)
+
+                        solver.zero_grad()
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
+                        solver.step()
+                    
                     pred = torch.max(outputs, dim=1)[1] 
                     vid_preds.append(pred)
-                
+
                 try:
                     video_pred = mode(vid_preds)
                 except:
@@ -110,13 +124,8 @@ for epoch in range(num_epochs):
                 tot += vid.size(0) # running tot of num of videos
                 loss = F.cross_entropy(outputs, classification)
 
-                print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
-                if train:
-                    solver.zero_grad()
-                    loss.backward()
-
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                    solver.step()
+                bin_conversion = 2*video_pred.item() + corr.item()
+                quant_results[bin_conversion] += 1
 
                 tloss += loss.item()
                 c += 1
@@ -126,5 +135,10 @@ for epoch in range(num_epochs):
         else:
             print('val loss', tloss/c, 'acc', acc/tot)
             lr_sched.step(tloss/c)
-    
-    lr_sched.step(loss/c)
+        
+        print("False negative:", quant_results[0])
+        print("True negative:", quant_results[1])
+        print("False positive:", quant_results[2])
+        print("True positive:", quant_results[3])
+        print("Total:", tot)
+

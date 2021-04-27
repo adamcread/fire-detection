@@ -75,21 +75,27 @@ lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
     for phase in ['train', 'val']:
+        print("epoch:", epoch, "phase:", phase)
+
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
         else: # evaluate model
             model.eval()
             
-        tloss = 0. # time loss for each iteration?
-        acc = 0. # accuracy/
-        tot = 0 #total?
-        c = 0 # iteration
+        tloss = 0. # total loss
+        acc = 0. # accuracy
+        tot = 0 #total videos
+        c = 0 # batch counter
+
+        # 0 - false negative 
+        # 1 - true negative
+        # 2 - false positive
+        # 3 - true positive
+        quant_results = [0, 0, 0, 0]
 
         with torch.set_grad_enabled(train):
             for vid, classification in dataloader[phase]:
-                print("mode:", phase)
-                print("epoch {} video {}".format(epoch, c*batch_size))
                 vid = vid.to(device)
    
                 classification = classification.to(device)
@@ -97,12 +103,12 @@ for epoch in range(num_epochs):
                 outputs = outputs.squeeze(3).squeeze(2)
 
                 pred = torch.max(outputs, dim=1)[1] 
-
-                # num of correct 
                 corr = torch.sum((pred == classification).int())
-
                 acc += corr.item()
                 tot += vid.size(0)
+
+                bin_conversion = 2*pred.item() + corr.item()
+                quant_results[bin_conversion] += 1
 
                 loss = F.cross_entropy(outputs, classification)
                 
@@ -113,7 +119,6 @@ for epoch in range(num_epochs):
                     torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
                     solver.step()
                 
-                print("Correct: {} Total: {} Accuracy: {}".format(acc, tot, acc/tot))
                 tloss += loss.item()
                 c += 1
             
@@ -123,4 +128,8 @@ for epoch in range(num_epochs):
             print('val loss', tloss/c, 'acc', acc/tot)
             lr_sched.step(tloss/c)
 
-    lr_sched.step(loss/c)
+        print("False negative:", quant_results[0])
+        print("True negative:", quant_results[1])
+        print("False positive:", quant_results[2])
+        print("True positive:", quant_results[3])
+        print("Total:", tot)

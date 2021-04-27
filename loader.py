@@ -25,7 +25,7 @@ class DS(data_utl.Dataset):
     def __getitem__(self, index):
         vid = self.vids[index] # get video at correct index
         classification = self.data[vid] # get label from correct vid
-        print(vid)
+
         # open path now video must exist
         with open(os.path.join(self.root, vid), 'rb') as f:
             enc_vid = f.read() # read file binary
