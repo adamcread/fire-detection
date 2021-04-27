@@ -1,9 +1,7 @@
 import os
-import sys
 import argparse
-import inspect
-import datetime
 import json
+import time
 from statistics import mode
 
 parser = argparse.ArgumentParser()
@@ -46,7 +44,7 @@ dataset_tr = DS(
         root=root, # root dir to find videos
         length=args.length # number of videos?
 ) 
-dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
 
 # load evaluation videos into object
 dataset_val = DS(
@@ -54,7 +52,7 @@ dataset_val = DS(
         root=root, 
         length=args.length
 ) 
-vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
 
 dataloader = {'train':dl, 'val':vdl} # dictionary to contain training and validation videos loaded
 print("DATA LOADED")
@@ -74,6 +72,7 @@ num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
     for phase in ['train', 'val']:
         print("epoch:", epoch, "phase:", phase)
+        start = time.time()
 
         train = (phase=='train') # enable grad or not
         if train: # train model
@@ -94,7 +93,7 @@ for epoch in range(num_epochs):
 
         with torch.set_grad_enabled(train):
             for vids, classification in dataloader[phase]:
-                classification = classification.to(device) # video prediction
+                classification = classification.to(device)
 
                 vid_preds = []
                 for vid in vids:
@@ -141,4 +140,5 @@ for epoch in range(num_epochs):
         print("False positive:", quant_results[2])
         print("True positive:", quant_results[3])
         print("Total:", tot)
+        print("Time:", time.time() - start)
 
