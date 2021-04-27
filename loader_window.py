@@ -6,13 +6,8 @@ import cv2
 import numpy as np
 import json
 import os
-import argparse
 
-parser = argparse.ArgumentParser()
 
-parser.add_argument('-json', type=str)
-
-args = parser.parse_args()
 class DS(data_utl.Dataset):
     def __init__(self, split_file, root, length=16):
         with open(split_file, 'r') as f:
@@ -62,18 +57,3 @@ class DS(data_utl.Dataset):
     
     def __len__(self):
         return len(self.data.keys())
-
-
-train = "./json/test1aab.json" # json containing videos for training
-val = "./json/val.json" # json containing videos for evaluation
-
-
-# load training videos into object
-dataset_tr = DS(
-        split_file=args.json, # videos selected for loading
-        root=root, # root dir to find videos
-        length=16 # number of videos?
-) 
-
-for i in range(len(dataset_tr)):
-    x = dataset_tr[i]

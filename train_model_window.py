@@ -73,6 +73,8 @@ lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
     for phase in ['train', 'val']:
+        print("epoch:", epoch, "phase:", phase)
+
         train = (phase=='train') # enable grad or not
         if train: # train model
             model.train()
@@ -86,8 +88,6 @@ for epoch in range(num_epochs):
 
         with torch.set_grad_enabled(train):
             for vids, classification in dataloader[phase]:
-                print("mode:", phase)
-                print("epoch {} video {}".format(epoch, c*batch_size))
                 classification = classification.to(device) # video prediction
                 vid_preds = []
 
