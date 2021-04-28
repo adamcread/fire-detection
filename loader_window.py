@@ -23,8 +23,6 @@ class DS(data_utl.Dataset):
         vid = self.vids[index]
         classification = self.data[vid]
 
-        print(vid)
-
         vid_path = os.path.join(self.root, vid)
 
         with open(vid_path, 'rb') as f:
