@@ -1,8 +1,8 @@
 import os
 import json
 
-root = "./dataset/split_resized_dataset/"
-dest = "./json/"
+root = "./dataset/mivia/split/"
+dest = "./json/mivia/"
 
 files = os.listdir(root)
 

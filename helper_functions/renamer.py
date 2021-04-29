@@ -1,6 +1,6 @@
 import os
 
-root = "./neg/"
+root = "./dataset/mivia/split/neg/"
 prefix = 'negVideo'
 suffix = ''
 
