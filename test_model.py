@@ -6,12 +6,10 @@ from statistics import mode
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-batch_size', type=int, default=1, help="batch size\n")
-parser.add_argument('-length', type=int, default=16, help="num of frames considered in each train\n")
-parser.add_argument('-lr', type=float, default=0.01, help="learning rate\n")
-parser.add_argument('-clip', type=float, default=0.1, help="gradient clipping\n")
-parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'\n")
-parser.add_argument('-resnet_depth', type=int, required=True, help="select 18, 34, 50, 101, 152 or 200\n")
+parser.add_argument('-batch_size', type=int, default=1, help="batch size")
+parser.add_argument('-length', type=int, default=16, help="num of frames considered in each train")
+parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'")
+parser.add_argument('-model_path', type=str, required=True, help="path to trained model")
 
 args = parser.parse_args()
 
@@ -31,25 +29,27 @@ model = flow_model.resnet_3d_v1(
     num_classes=2
 )
 
+state_path = "./state_dicts/" + args.model_path
+mode.load_state_dict(torch.load(state_path))
+
 model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
 
 from loader_window import DS
 
-train = "./json/train.json" # json containing videos for training
+val = "./json/val.json" # json containing videos for evaluation
 root = "./dataset/split_resized_dataset/" # path to videos
-state_path = "./state_dicts/"
 
 # load training videos into object
-dataset_tr = DS(
+dataset_val = DS(
         split_file=train, # videos selected for loading
         root=root, # root dir to find videos
         length=args.length, # number of videos?
         mode=args.train_mode
 ) 
-dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+vdl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
-dataloader = {'train':dl} # dictionary to contain training and validation videos loaded
+dataloader = {'val':vdl} # dictionary to contain training and validation videos loaded
 print("DATA LOADED")
     
 params = [p for p in model.parameters()]
@@ -65,7 +65,7 @@ solver = optim.SGD(
 lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
 num_epochs = int(1e30) # iterations
 for epoch in range(num_epochs):
-    for phase in ['train']:
+    for phase in ['val']:
         print("epoch:", epoch, "phase:", phase)
         start = time.time()
 
@@ -80,7 +80,7 @@ for epoch in range(num_epochs):
         tot = 0 #total?
         c = 0 # iteration
 
-         # 0 - false negative 
+        # 0 - false negative 
         # 1 - true negative
         # 2 - false positive
         # 3 - true positive
@@ -96,14 +96,6 @@ for epoch in range(num_epochs):
     
                     outputs = model(vid)
                     outputs = outputs.squeeze(3).squeeze(2)
-
-                    if train:
-                        loss = F.cross_entropy(outputs, classification)
-
-                        solver.zero_grad()
-                        loss.backward()
-                        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
-                        solver.step()
                     
                     pred = torch.max(outputs, dim=1)[1] 
                     vid_preds.append(pred)
@@ -136,5 +128,3 @@ for epoch in range(num_epochs):
         print("True positive:", quant_results[3])
         print("Total:", tot)
         print("Time:", time.time() - start)
-
-        torch.save(model.state_dict(), os.path.join(state_path, '{}-{}-epoch{}.pt'.format(args.train_mode, args.resnet_depth, epoch)))
