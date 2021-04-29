@@ -43,7 +43,6 @@ class DS(data_utl.Dataset):
                 start_frame = win_num*self.length
 
             frame_nums = [x+start_frame for x in range(self.length)] 
-            print(frame_nums)
 
             df, width, height = lintel.loadvid_frame_nums(
                             enc_vid,
@@ -65,12 +64,12 @@ class DS(data_utl.Dataset):
         return len(self.data.keys())
 
 
-
+import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-json', type=str)
 args = parser.parse_args()
 
-root = "./dataset/chenebert-2011/split/"
+root = "./dataset/dunnings-2018/split/"
 
 dataset = DS(
     split_file = args.json,
