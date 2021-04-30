@@ -30,13 +30,14 @@ model = flow_model.resnet_3d_v1(
     num_classes=2
 )
 
-state_path = "./state_dicts/" + args.model_path
-model.load_state_dict(torch.load(state_path))
-
 model = nn.DataParallel(model).to(device)
+
+state_path = "./state_dicts/" + args.model_path
+model.load_state_dict(torch.load(state_path, map_location=torch.device('cpu')))
+
 batch_size = args.batch_size
 
-from loader_window import DS
+from loader import DS
 
 val_root = "./json/" # json containing videos for evaluation
 data_root = "./dataset/" # path to videos
@@ -51,21 +52,10 @@ for f in files:
             length=args.length, # number of videos?
             mode=args.train_mode
     ) 
-    vdl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+    vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
     dataloader = {'val':vdl} # dictionary to contain training and validation videos loaded
-        
-    params = [p for p in model.parameters()]
-    # stochastic gradient descent
-    solver = optim.SGD(
-        [{'params':params}], # model.classifier's parameters
-        lr=args.lr, 
-        weight_decay=1e-6, 
-        momentum=0.9
-    ) # model.base's parameters
-
-    # changes learning rate based on current descent
-    lr_sched = optim.lr_scheduler.ReduceLROnPlateau(solver, patience=7)
+    
     num_epochs = int(1) # iterations
     for epoch in range(num_epochs):
         for phase in ['val']:
