@@ -38,7 +38,7 @@ class DS(data_utl.Dataset):
 
         for win_num in range(0, iterations):
             if self.mode == "random":
-                start_frame = random.randint(0, total_frames - self.length - 1)
+                start_frame = random.randint(0, (iterations-1)*self.length)
             else:
                 start_frame = win_num*self.length
 
