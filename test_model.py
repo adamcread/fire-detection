@@ -31,7 +31,7 @@ model = flow_model.resnet_3d_v1(
 )
 
 state_path = "./state_dicts/" + args.model_path
-mode.load_state_dict(torch.load(state_path))
+model.load_state_dict(torch.load(state_path))
 
 model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
