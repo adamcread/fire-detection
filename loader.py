@@ -63,18 +63,3 @@ class DS(data_utl.Dataset):
     def __len__(self):
         return len(self.data.keys())
 
-
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('-json', type=str)
-args = parser.parse_args()
-
-root = "./dataset/dunnings-2018/split/"
-
-dataset = DS(
-    split_file = args.json,
-    root=root,
-    mode="window"
-)
-
-x = dataset[0]

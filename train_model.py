@@ -34,10 +34,10 @@ model = flow_model.resnet_3d_v1(
 model = nn.DataParallel(model).to(device)
 batch_size = args.batch_size
 
-from loader_window import DS
+from loader import DS
 
-train = "./json/train.json" # json containing videos for training
-root = "./dataset/split_resized_dataset/" # path to videos
+train = "./json/kim-lee-2019.json" # json containing videos for training
+root = "./dataset/kim-lee-2019/split_resized/" # path to videos
 state_path = "./state_dicts/"
 
 # load training videos into object
@@ -80,7 +80,7 @@ for epoch in range(num_epochs):
         tot = 0 #total?
         c = 0 # iteration
 
-         # 0 - false negative 
+        # 0 - false negative 
         # 1 - true negative
         # 2 - false positive
         # 3 - true positive
