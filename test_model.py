@@ -10,6 +10,7 @@ parser.add_argument('-batch_size', type=int, default=1, help="batch size")
 parser.add_argument('-length', type=int, default=16, help="num of frames considered in each train")
 parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'")
 parser.add_argument('-model_path', type=str, required=True, help="path to trained model")
+parser.add_argument('-resnet_depth', type=int, required=True, help="select 18, 34, 50, 101, 152 or 200\n")
 
 args = parser.parse_args()
 
