@@ -2,8 +2,8 @@ import os
 import json
 import random
 
-root = "./dataset/mivia/split_resized/"
-dest = "./json/mivia.json"
+root = "./dataset/dunnings-2018/split_resized/"
+dest = "./json/dunnings-2018.json"
 
 json_dict = {}
 

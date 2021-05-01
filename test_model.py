@@ -42,7 +42,7 @@ from loader import DS
 val_root = "./json/" # json containing videos for evaluation
 data_root = "./dataset/" # path to videos
 
-files = ["chenebert-2011", "dunnings-2018", "furg-fire-dataset", "mivia"]
+files = ["mivia", "furg-fire-dataset", "chenebert-2011", "dunnings-2018"]
 
 for f in files:
     # load training videos into object
@@ -112,7 +112,6 @@ for f in files:
                 print('train loss', tloss/c, 'acc', acc/tot)
             else:
                 print('val loss', tloss/c, 'acc', acc/tot)
-                lr_sched.step(tloss/c)
             
             print("False negative:", quant_results[0])
             print("True negative:", quant_results[1])
