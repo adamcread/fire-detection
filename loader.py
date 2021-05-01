@@ -9,7 +9,7 @@ import os
 import random
 
 class DS(data_utl.Dataset):
-    def __init__(self, split_file, root, mode, length=16):
+    def __init__(self, split_file, root, mode, data_aug, length=16):
         with open(split_file, 'r') as f:
             self.data = json.load(f)
         
@@ -19,6 +19,7 @@ class DS(data_utl.Dataset):
         self.root = root
         self.length = length
         self.mode = mode
+        self.data_aug = data_aug
 
     def __getitem__(self, index):
         vid = self.vids[index]
@@ -52,6 +53,10 @@ class DS(data_utl.Dataset):
 
             df = np.frombuffer(df, dtype=np.uint8)
             df = np.reshape(df, newshape=(self.length, height, width, 3))
+
+            if random.random() < 0.5 and self.data_aug:
+                print("data aug")
+                df = np.flip(df, axis=2).copy()
 
             df = 1-2*(df.astype(np.float32)/255)
             df = df.transpose([3,0,1,2])

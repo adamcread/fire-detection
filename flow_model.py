@@ -149,7 +149,8 @@ class Block3D(nn.Module):
 class ResNet3D(nn.Module):
 	def __init__(self, block_fn, layers, num_classes,
 							 data_format='channels_last', non_local=[], rep_flow=[],
-							 dropout_keep_prob=0.5):
+							 dropout_keep_prob=0.5,
+							 fof=False):
 		"""Generator for ResNet v1 models.
 		Args:
 			block_fn: `function` for the block to use within the model. Either
@@ -167,8 +168,16 @@ class ResNet3D(nn.Module):
 		super(ResNet3D, self).__init__()
 		is_training = False # no effect in pytorch
 
+		self.fof = fof
+
 		"""Creation of the model graph."""
 		self.stem = nn.Conv3d(3, 64, kernel_size=7, bias=False, stride=2)
+		self.rep_flow_conv = nn.Conv3d(
+			in_channels=512,
+			out_channels=512,
+			kernel_size=(2, 1, 1),
+			padding=(1, 0, 0)
+		)
 		
 		self.bn1 = nn.BatchNorm3d(64, eps=0.001, momentum=0.01)
 		self.relu = nn.ReLU(inplace=True)
@@ -213,13 +222,20 @@ class ResNet3D(nn.Module):
 		x = self.bn1(x)
 		x = F.relu(x)
 		x = self.maxpool(self.pad(x))
+		
+
 		x = self.res2(x)
 		x = self.res3(x)
 
 		x = self.rep_flow(x)
 
+		if self.fof:
+			x = self.rep_flow_conv(x)
+			x = self.rep_flow(x)
+
 		x = self.res4(x)
 		x = self.res5(x)
+
 		x = x.mean(3).mean(3).unsqueeze(3).unsqueeze(3) # spatial average
 
 		x = self.dropout(x)
@@ -228,7 +244,7 @@ class ResNet3D(nn.Module):
 		return x
 
 
-def resnet_3d_v1(resnet_depth, num_classes, data_format='channels_last', is_3d=True, non_local=[0,0,0,0], rep_flow=[0,0,0,0,0]):
+def resnet_3d_v1(resnet_depth, num_classes, data_format='channels_last', is_3d=True, non_local=[0,0,0,0], rep_flow=[0,0,0,0,0], fof=False):
 	"""Returns the ResNet model for a given size and number of output classes."""
 	model_params = {
 			18: {'block': None, 'layers': [2, 2, 2, 2]},
@@ -244,4 +260,5 @@ def resnet_3d_v1(resnet_depth, num_classes, data_format='channels_last', is_3d=T
 
 	params = model_params[resnet_depth]
 	return ResNet3D(
-		params['block'], params['layers'], num_classes, data_format, non_local, rep_flow)
+		params['block'], params['layers'], num_classes, data_format, non_local, rep_flow, fof=fof
+	)

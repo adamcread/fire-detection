@@ -6,12 +6,14 @@ from statistics import mode
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('-batch_size', type=int, default=1, help="batch size\n")
-parser.add_argument('-length', type=int, default=16, help="num of frames considered in each train\n")
-parser.add_argument('-lr', type=float, default=0.01, help="learning rate\n")
-parser.add_argument('-clip', type=float, default=0.1, help="gradient clipping\n")
-parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'\n")
-parser.add_argument('-resnet_depth', type=int, required=True, help="select 18, 34, 50, 101, 152 or 200\n")
+parser.add_argument('-batch_size', type=int, default=1, help="batch size")
+parser.add_argument('-length', type=int, default=16, help="num of frames considered in each train")
+parser.add_argument('-lr', type=float, default=0.01, help="learning rate")
+parser.add_argument('-clip', type=float, default=0.1, help="gradient clipping")
+parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'")
+parser.add_argument('-fof', type=bool, default=False, help="use flow of flow")
+parser.add_argument('-data_aug', type=bool, default=False, help="use data augmentation")
+parser.add_argument('-resnet_depth', type=int, required=True, help="select 18, 34, 50, 101, 152 or 200")
 
 args = parser.parse_args()
 
@@ -28,7 +30,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = flow_model.resnet_3d_v1(
     resnet_depth=args.resnet_depth, # taken from resnet_3d_v1 definition
-    num_classes=2
+    num_classes=2,
+    fof=args.fof
 )
 
 model = nn.DataParallel(model).to(device)
@@ -45,7 +48,8 @@ dataset_tr = DS(
         split_file=train, # videos selected for loading
         root=root, # root dir to find videos
         length=args.length, # number of videos?
-        mode=args.train_mode
+        mode=args.train_mode,
+        data_aug=args.data_aug
 ) 
 dl = torch.utils.data.DataLoader(dataset_tr, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
