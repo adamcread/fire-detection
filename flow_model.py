@@ -231,6 +231,7 @@ class ResNet3D(nn.Module):
 
 		if self.fof:
 			x = self.rep_flow_conv(x)
+			x = self.bn1(x)
 			x = self.rep_flow(x)
 
 		x = self.res4(x)
