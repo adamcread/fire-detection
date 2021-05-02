@@ -141,4 +141,10 @@ for epoch in range(num_epochs):
         print("Total:", tot)
         print("Time:", time.time() - start)
 
-        torch.save(model.state_dict(), os.path.join(state_path, '{}-{}-epoch{}.pt'.format(args.train_mode, args.resnet_depth, epoch)))
+        path = '{}-{}-epoch{}'.format(args.train_mode, args.resnet_depth, epoch)
+        if args.data_aug:
+            path += "-daug"
+        if args.fof:
+            path += "-fof"
+
+        torch.save(model.state_dict(), os.path.join(state_path, path+".pt"))
