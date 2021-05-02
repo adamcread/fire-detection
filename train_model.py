@@ -23,6 +23,9 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim import lr_scheduler
 
+print("daug", args.data_aug)
+print("fof", args.fof)
+
 #import model
 import flow_model
 
