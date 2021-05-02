@@ -180,6 +180,9 @@ class ResNet3D(nn.Module):
 		)
 		
 		self.bn1 = nn.BatchNorm3d(64, eps=0.001, momentum=0.01)
+
+		self.bnfof = nn.BatchNorm3d(512, eps=0.001, momentum=0.01)
+
 		self.relu = nn.ReLU(inplace=True)
 		self.pad = SamePadding((3,3,3),(2,2,2))
 		self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=0)
@@ -231,7 +234,7 @@ class ResNet3D(nn.Module):
 
 		if self.fof:
 			x = self.rep_flow_conv(x)
-			x = self.bn1(x)
+			x = self.bnfof(x)
 			x = self.rep_flow(x)
 
 		x = self.res4(x)

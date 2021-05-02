@@ -55,7 +55,6 @@ class DS(data_utl.Dataset):
             df = np.reshape(df, newshape=(self.length, height, width, 3))
 
             if random.random() < 0.5 and self.data_aug:
-                print("data aug")
                 df = np.flip(df, axis=2).copy()
 
             df = 1-2*(df.astype(np.float32)/255)
