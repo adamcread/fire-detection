@@ -50,7 +50,8 @@ for f in files:
             split_file=val_root + f + ".json", # videos selected for loading
             root=data_root + f + "/split_resized/", # root dir to find videos
             length=args.length, # number of videos?
-            mode=args.train_mode
+            mode=args.train_mode,
+            data_aug=False
     ) 
     vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
