@@ -49,7 +49,8 @@ dataset_val = DS(
         split_file=val_root,
         root=data_root,
         length=args.length, # number of videos?
-        mode=args.train_mode
+        mode=args.train_mode,
+        data_aug=False
 ) 
 vdl = torch.utils.data.DataLoader(dataset_val, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
