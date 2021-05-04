@@ -11,7 +11,7 @@ parser.add_argument('-length', type=int, default=16, help="num of frames conside
 parser.add_argument('-train_mode', type=str, required=True, help="select 'start', 'random' or 'window'")
 parser.add_argument('-model_path', type=str, required=True, help="path to trained model")
 parser.add_argument('-resnet_depth', type=int, required=True, help="select 18, 34, 50, 101, 152 or 200\n")
-parser.add_argument('-demo_classification', type=str, required=True)
+parser.add_argument('-demo', type=str, required=True)
 
 args = parser.parse_args()
 
@@ -40,7 +40,7 @@ batch_size = args.batch_size
 
 from loader import DS
 
-val_root = "./json/demo-{}.json".format(args.demo_classification)
+val_root = "./json/demo-{}.json".format(args.demo)
 data_root = "./dataset/software_demo/"
 
 
