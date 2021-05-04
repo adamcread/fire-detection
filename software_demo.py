@@ -58,7 +58,7 @@ dataloader = {'val':vdl} # dictionary to contain training and validation videos 
 for phase in ['val']:
     model.eval()
 
-    with torch.set_grad_enabled(train):
+    with torch.set_grad_enabled(False):
         for vids, classification in dataloader[phase]:
             classification = classification.to(device)
 
